@@ -16,7 +16,8 @@ Installation
 The very basic default page can be replaced by adding a
 [Go template file](http://golang.org/pkg/text/template/)
 named `index.html` in the same directory as the executable.
- 
+
+About
 -----
 
 __Random Password Please__ was written by John Barham (jbarham@gmail.com).
