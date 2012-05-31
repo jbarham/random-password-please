@@ -1,4 +1,4 @@
-random-password-please
+Random Password Please
 ======================
 
 __Random Password Please__ is a random password generating web server with an API.
@@ -13,7 +13,10 @@ Installation
 
 	go get github.com/jbarham/random-password-please
 
-About
+The very basic default page can be replaced by adding a
+[Go template file](http://golang.org/pkg/text/template/)
+named `index.html` in the same directory as the executable.
+ 
 -----
 
-__Random Password Please__ was written by John Barham (<jbarham@gmail.com>).
+__Random Password Please__ was written by John Barham (jbarham@gmail.com).
