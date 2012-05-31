@@ -83,6 +83,7 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 		Counter:  fmt.Sprint(counter),
 		Host:     req.Host,
 	}
+	w.Header().Set("Cache-Control", "no-cache")
 	index.Execute(w, params)
 }
 
@@ -98,13 +99,16 @@ func apiHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Content-Length", strconv.Itoa(n))
 	fmt.Fprint(w, getPassword()[:n])
 }
 
 func counterHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Cache-Control", "no-cache")
-	fmt.Fprint(w, counter)
+	s := strconv.FormatUint(counter, 10)
+	w.Header().Set("Content-Length", strconv.Itoa(len(s)))
+	fmt.Fprint(w, s)
 }
 
 func generatePasswords() {
