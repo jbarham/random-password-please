@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"sync"
 	"text/template"
+	"time"
 )
 
 const (
@@ -169,6 +170,8 @@ func init() {
 		log.Println("Using default template")
 		index = template.Must(template.New("index").Parse(indexHtml))
 	}
+
+	rand.Seed(time.Now().UnixNano())
 }
 
 var indexHtml = `
