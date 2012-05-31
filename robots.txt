@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /password.txt
+Disallow: /counter
