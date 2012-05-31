@@ -195,7 +195,7 @@ var indexHtml = `
 		<p>
 			<small>
 				<span id="counter">{{.Counter}}</span> passwords generated
-				<br><attr title="{{.Host}}/password.txt[?len=n where n = 8-30]">API</attr>
+				<br><attr title="{{.Host}}/password.txt?len=n where n = 8-30">API</attr>
 				<br><a href="https://github.com/jbarham/random-password-please">Source</a>
 			</small>
 		</p>
