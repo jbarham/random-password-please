@@ -184,29 +184,38 @@ var indexHtml = `
 <head>
 	<meta charset="UTF-8">
 	<title>Random Password Please</title>
+	<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 	<div style="text-align: center">
 		<p>Your random password is:</p>
 		<h1 id="password">{{.Password}}</h1>
-		<form id="form" method="post">
+		<form method="post">
+			<div id="length"></div>
+			<p><small><span id="length-label">8</span> characters</small></p>
 			<button type="submit">Another Password Please</button>
 		</form>
 		<p>
 			<small>
 				<span id="counter">{{.Counter}}</span> passwords generated
-				<br><attr title="{{.Host}}/password.txt?len=n where n = 8-30">API</attr>
+				<br><a href="http://random-password-please.com/">random-password-please.com</a>
 				<br><a href="https://github.com/jbarham/random-password-please">Source</a>
+				<br><attr title="{{.Host}}/password.txt?len=n where n = 8-30">API</attr>
 			</small>
 		</p>
 	</div>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 	<script type="text/javascript">
 		$(document).ready(function(){
-			$('#form').submit(function(event) {
+			$('#length').slider({min: 8, max: 30});
+
+			$('#length').slider({slide: function(event, ui) { $('#length-label').html(ui.value);}});
+
+			$('form').submit(function(event) {
 				event.preventDefault();
 				/* Load new password via API. */
-				$('#password').load('/password.txt');
+				$('#password').load('/password.txt?len=' + $('#length').slider('value'));
 				$('#counter').load('/counter');
 			})
 		});
