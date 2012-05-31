@@ -16,4 +16,4 @@ Installation
 About
 -----
 
-__Random Password Please__ was written by [John Barham](jbarham@gmail.com).
+__Random Password Please__ was written by John Barham (<jbarham@gmail.com>).
