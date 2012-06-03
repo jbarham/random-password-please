@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -56,7 +57,7 @@ func main() {
 			log.Fatalf("Failed to read counter file: %s", err)
 		}
 		if len(counterBytes) > 0 {
-			counter, err = strconv.ParseUint(string(counterBytes), 10, 64)
+			counter, err = strconv.ParseUint(string(bytes.TrimSpace(counterBytes)), 10, 64)
 			if err != nil {
 				log.Fatal("Failed to read counter value")
 			}
@@ -78,6 +79,11 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		http.NotFound(w, req)
+		return
+	}
+
 	params := indexParams{
 		Password: getPassword()[:minPasswordLength],
 		Counter:  fmt.Sprint(counter),
