@@ -232,20 +232,16 @@ var indexHtml = `
 
 			$('#slider').on("input", function(event) {
 				var val = $(event.target).val();
-				console.log('input', val);
 				$('#length-label').html(val);
-				getNewPassword();
 			});
 
 			$('#slider').change(function(event) {
 				var val = $(event.target).val();
-				console.log('change', val);
 				$('#length-label').html(val);
 				getNewPassword();
 			});
 
 			$('#button').click(function(event) {
-				console.log('clicked!');
 				event.preventDefault();
 				getNewPassword();
 			});
