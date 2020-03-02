@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	httpAddr = flag.String("http", ":8080", "http listen address")
+	httpAddr = flag.String("http", defaultAddr(), "http listen address")
 
 	// Counts number of passwords generated.
 	counter     uint64
@@ -75,6 +75,7 @@ func main() {
 
 	go generatePasswords()
 
+	log.Print("Running at address ", *httpAddr)
 	log.Fatal(http.ListenAndServe(*httpAddr, nil))
 }
 
@@ -159,7 +160,7 @@ func saveCounter() {
 	}
 	if err != nil {
 		// Complain, but doesn't seem worth bailing at this point.
-		log.Print("Failed to write counter: %s", err)
+		log.Print("Failed to write counter:", err)
 	}
 }
 
@@ -169,6 +170,15 @@ func handleSignals() {
 	<-sigChan
 	saveCounter()
 	os.Exit(0)
+}
+
+func defaultAddr() string {
+	port := os.Getenv("PORT")
+	if port != "" {
+		return ":" + port
+	}
+
+	return ":8080"
 }
 
 func init() {
@@ -190,40 +200,55 @@ var indexHtml = `
 <head>
 	<meta charset="UTF-8">
 	<title>Random Password Please</title>
-	<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+	<style type="text/css">
+		body {
+			font-size: 18px;
+		}
+		.slider {
+			width: 50%;
+		}
+	</style>
 </head>
 <body>
 	<div style="text-align: center">
 		<p>Your random password is:</p>
 		<h1 id="password">{{.Password}}</h1>
-		<form method="post">
-			<div id="length"></div>
-			<p><small><span id="length-label">8</span> characters</small></p>
-			<button type="submit">Another Password Please</button>
-		</form>
+		<input type="range" min="8" max="30" value="12" class="slider" id="slider">
+		<p><span id="length-label">12</span> characters</p>
+		<button id="button">Another Password Please</button>
+		<p><span id="counter">{{.Counter}}</span> passwords generated</p>
 		<p>
-			<small>
-				<span id="counter">{{.Counter}}</span> passwords generated
-				<br><a href="http://random-password-please.com/">random-password-please.com</a>
-				<br><a href="https://github.com/jbarham/random-password-please">Source</a>
-				<br><attr title="{{.Host}}/password.txt?len=n where n = 8-30">API</attr>
-			</small>
+				<a href="https://github.com/jbarham/random-password-please">Source</a> | <attr title="{{.Host}}/password.txt?len=n where n = 8-30">API</attr>
 		</p>
 	</div>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 	<script type="text/javascript">
-		$(document).ready(function(){
-			$('#length').slider({min: 8, max: 30});
-
-			$('#length').slider({slide: function(event, ui) { $('#length-label').html(ui.value);}});
-
-			$('form').submit(function(event) {
-				event.preventDefault();
+		$(document).ready(function() {
+			function getNewPassword() {
 				/* Load new password via API. */
-				$('#password').load('/password.txt?len=' + $('#length').slider('value'));
+				$('#password').load('/password.txt?len=' + $('#slider').val());
 				$('#counter').load('/counter');
-			})
+			};
+
+			$('#slider').on("input", function(event) {
+				var val = $(event.target).val();
+				console.log('input', val);
+				$('#length-label').html(val);
+				getNewPassword();
+			});
+
+			$('#slider').change(function(event) {
+				var val = $(event.target).val();
+				console.log('change', val);
+				$('#length-label').html(val);
+				getNewPassword();
+			});
+
+			$('#button').click(function(event) {
+				console.log('clicked!');
+				event.preventDefault();
+				getNewPassword();
+			});
 		});
 	</script>
 </body>
