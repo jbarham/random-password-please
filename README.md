@@ -6,6 +6,7 @@ Using only standard library packages it demonstrates:
 * how to write a simple web server
 * template parsing
 * goroutines and channels
+* generating random tokens
 * signal handling for graceful shutdowns
 
 The live version is online at https://random-password-please.herokuapp.com/.
