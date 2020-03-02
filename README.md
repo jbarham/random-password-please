@@ -1,23 +1,36 @@
-Random Password Please
-======================
+# Random Password Please
 
-__Random Password Please__ is a random password generating web server with an API.
+*Random Password Please* is a simple Go demo app that generates random passwords.
+Using only standard library packages it demonstrates:
 
-The live version is online at <http://random-password-please.com/>.
+* how to write a simple web server
+* template parsing
+* goroutines and channels
+* signal handling for graceful shutdowns
 
-__Random Password Please__ is written in [Go](http://golang.org) and uses only
-standard library packages.
+The live version is online at https://random-password-please.herokuapp.com/.
+(Note that it might take a few seconds to load if the app is asleep.)
 
-Installation
-------------
+## Running Locally
 
-	go get github.com/jbarham/random-password-please
+```sh
+$ git clone https://github.com/jbarham/random-password-please.git
+$ cd random-password-please
+$ go run main.go
+```
 
 The very basic default page can be replaced by adding a
 [Go template file](http://golang.org/pkg/text/template/)
 named `index.html` in the same directory as the executable.
 
-About
------
+## Deploying to Heroku
 
-__Random Password Please__ was written by John Barham (jbarham@gmail.com).
+```sh
+$ heroku create
+$ git push heroku master
+$ heroku open
+```
+
+### Author
+
+John Barham, [Wombat Software](https://www.wombatsoftware.com/)
