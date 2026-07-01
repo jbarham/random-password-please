@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"html/template"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -12,8 +14,7 @@ import (
 	"os/signal"
 	"strconv"
 	"sync"
-	"text/template"
-	"time"
+	"syscall"
 )
 
 const (
@@ -33,9 +34,11 @@ var (
 	counterFile     *os.File
 	counterFileLock sync.Mutex
 
-	index *template.Template
+	//go:embed index.html
+	indexHTML string
+	index     *template.Template
 
-	passwords chan (string)
+	passwords chan string
 )
 
 type indexParams struct {
@@ -45,6 +48,8 @@ type indexParams struct {
 func main() {
 	flag.Parse()
 
+	index = template.Must(template.New("index").Parse(indexHTML))
+
 	if *counterFilePath != "" {
 		var err error
 
@@ -52,7 +57,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to open counter file: %s", err)
 		}
-		counterBytes, err := ioutil.ReadAll(counterFile)
+		counterBytes, err := io.ReadAll(counterFile)
 		if err != nil {
 			log.Fatalf("Failed to read counter file: %s", err)
 		}
@@ -64,11 +69,11 @@ func main() {
 		}
 	}
 
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("GET /{$}", indexHandler)
 
-	http.HandleFunc("/password.txt", apiHandler)
+	http.HandleFunc("GET /password.txt", apiHandler)
 
-	http.HandleFunc("/counter", counterHandler)
+	http.HandleFunc("GET /counter", counterHandler)
 
 	// Ensure counter is saved on exit.
 	go handleSignals()
@@ -76,15 +81,12 @@ func main() {
 	go generatePasswords()
 
 	log.Print("Running at address ", *httpAddr)
-	log.Fatal(http.ListenAndServe(*httpAddr, nil))
+	if err := http.ListenAndServe(*httpAddr, nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path != "/" {
-		http.NotFound(w, req)
-		return
-	}
-
 	params := indexParams{
 		Password: getPassword()[:minPasswordLength],
 		Counter:  fmt.Sprint(counter),
@@ -99,22 +101,16 @@ func apiHandler(w http.ResponseWriter, req *http.Request) {
 	n, err := strconv.Atoi(req.FormValue("len"))
 	if err != nil {
 		n = minPasswordLength
-	} else if n < minPasswordLength {
-		n = minPasswordLength
-	} else if n > maxPasswordLength {
-		n = maxPasswordLength
+	} else {
+		n = min(max(n, minPasswordLength), maxPasswordLength)
 	}
-	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Content-Length", strconv.Itoa(n))
 	fmt.Fprint(w, getPassword()[:n])
 }
 
 func counterHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("Cache-Control", "no-cache")
 	s := strconv.FormatUint(counter, 10)
-	w.Header().Set("Content-Length", strconv.Itoa(len(s)))
 	fmt.Fprint(w, s)
 }
 
@@ -166,8 +162,8 @@ func saveCounter() {
 
 func handleSignals() {
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Kill, os.Interrupt)
-	<-sigChan
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
+	log.Printf("Got signal %s, shutting down...", <-sigChan)
 	saveCounter()
 	os.Exit(0)
 }
@@ -180,73 +176,3 @@ func defaultAddr() string {
 
 	return ":8080"
 }
-
-func init() {
-	var err error
-
-	// Parse optional on-disk index file.
-	if index, err = template.ParseFiles("./index.html"); err != nil {
-		log.Println(err)
-		log.Println("Using default template")
-		index = template.Must(template.New("index").Parse(indexHtml))
-	}
-
-	rand.Seed(time.Now().UnixNano())
-}
-
-var indexHtml = `
-<!doctype html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<title>Random Password Please</title>
-	<style type="text/css">
-		body {
-			font-size: 18px;
-		}
-		.slider {
-			width: 50%;
-		}
-	</style>
-</head>
-<body>
-	<div style="text-align: center">
-		<p>Your random password is:</p>
-		<h1 id="password">{{.Password}}</h1>
-		<input type="range" min="8" max="30" value="12" class="slider" id="slider">
-		<p><span id="length-label">12</span> characters</p>
-		<button id="button">Another Password Please</button>
-		<p><span id="counter">{{.Counter}}</span> passwords generated</p>
-		<p>
-				<a href="https://github.com/jbarham/random-password-please">Source</a> | <attr title="{{.Host}}/password.txt?len=n where n = 8-30">API</attr>
-		</p>
-	</div>
-	<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-	<script type="text/javascript">
-		$(document).ready(function() {
-			function getNewPassword() {
-				/* Load new password via API. */
-				$('#password').load('/password.txt?len=' + $('#slider').val());
-				$('#counter').load('/counter');
-			};
-
-			$('#slider').on("input", function(event) {
-				var val = $(event.target).val();
-				$('#length-label').html(val);
-			});
-
-			$('#slider').change(function(event) {
-				var val = $(event.target).val();
-				$('#length-label').html(val);
-				getNewPassword();
-			});
-
-			$('#button').click(function(event) {
-				event.preventDefault();
-				getNewPassword();
-			});
-		});
-	</script>
-</body>
-</html>
-`

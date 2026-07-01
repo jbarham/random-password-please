@@ -20,9 +20,8 @@ $ cd random-password-please
 $ go run main.go
 ```
 
-The very basic default page can be replaced by adding a
-[Go template file](http://golang.org/pkg/text/template/)
-named `index.html` in the same directory as the executable.
+The basic default HTML file `index.html` can be replaced
+with a custom [Go HTML template file](http://golang.org/pkg/html/template/).
 
 ## Deploying to Heroku
 
